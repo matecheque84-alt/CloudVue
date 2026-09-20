@@ -1,0 +1,71 @@
+incident:
+  id: "INC-YYYYMMDD-001"
+  title: ""
+  status: "open"
+  owner: ""
+  started_at_utc: ""
+  last_updated_at_utc: ""
+
+identity_events:
+  - timestamp_utc: ""
+    source: "iam|sso|rbac|kube-audit"
+    actor: ""
+    action: ""
+    target: ""
+    outcome: "success|failure|unknown"
+    evidence_uri: ""
+    hash_sha256: ""
+
+ci_cd_events:
+  - timestamp_utc: ""
+    source: "github-actions|gitlab-ci|jenkins|other"
+    pipeline_id: ""
+    runner_id: ""
+    artifact: ""
+    deploy_target: ""
+    evidence_uri: ""
+    hash_sha256: ""
+
+repository_events:
+  - timestamp_utc: ""
+    source: "commit|pr|workflow|secret-scan"
+    ref: ""
+    author: ""
+    summary: ""
+    evidence_uri: ""
+    hash_sha256: ""
+
+credential_events:
+  - timestamp_utc: ""
+    credential_type: "token|key|service-account|session"
+    credential_id: ""
+    origin_ip: ""
+    user_agent: ""
+    action: "issued|used|rotated|revoked"
+    anomaly: ""
+    evidence_uri: ""
+    hash_sha256: ""
+
+prior_findings:
+  - finding_id: ""
+    source: "siem|edr|scanner|manual"
+    severity: "low|medium|high|critical"
+    summary: ""
+    related: true
+    evidence_uri: ""
+
+security_conclusion:
+  attribution:
+    entity_type: "user|token|runner|unknown"
+    entity_id: ""
+    confidence: "low|medium|high"
+  kill_chain:
+    initial_access: ""
+    execution: ""
+    persistence: ""
+    lateral_movement: ""
+    objective: ""
+  gaps:
+    - ""
+  next_actions:
+    - ""
