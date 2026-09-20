@@ -35,3 +35,9 @@ npm test
 ```
 
 For detailed explanation on how things work, checkout the [guide](http://vuejs-templates.github.io/webpack/) and [docs for vue-loader](http://vuejs.github.io/vue-loader).
+
+## Incident Response Assets
+
+Incident response and evidence templates are available at:
+
+- `/home/runner/work/CloudVue/CloudVue/security/incident-response/README.md`

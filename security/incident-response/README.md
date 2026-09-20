@@ -63,3 +63,5 @@ Entidade atribuída deve incluir, quando possível: usuário/token, runner, IP, 
 - CI/CD: runners isolados, ambientes efêmeros, proteção de branch, assinatura de artefato.
 - Identidade/segredos: MFA forte, rotação automática, tokens de curta duração, vault.
 - Detecção: SIEM com alertas de comportamento anômalo em IAM/CI/cluster.
+
+Checklist operacional: `/home/runner/work/CloudVue/CloudVue/security/incident-response/eradication-recovery-hardening.checklist.md`
