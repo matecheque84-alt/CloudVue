@@ -1,37 +1,53 @@
-# cloudvue
+# Repositório GitHub — SPE Castro Alves/Sapeaçu
 
-A 10% time project to create a smart user interface for creating and updating CloudFormation templates created with Vue.js
+## Objetivo
+Este repositório privado versiona os documentos de desenvolvimento (Greenfield → RTB) e funciona como base comum de trabalho entre ChatGPT (pesquisa) e Claude (revisão crítica, modelagem e materiais institucionais).
 
-## How it works
+## Estrutura padrão
+- `01_premissas/` (`log_premissas.csv`)
+- `02_modelo_financeiro/`
+- `03_regulatorio/` (`registro_regulatorio.csv`)
+- `04_conexao/`
+- `05_fundiario/`
+- `06_ambiental/`
+- `07_riscos/` (`matriz_riscos.csv`)
+- `08_data_room_index/` (`indice_data_room.csv`)
+- `09_materiais_investidor/`
+- `README.md`
+- `CHANGELOG.md`
+- `SECURITY.md`
+- `.gitignore`
 
-Utilizing a gigantic JSON file AWS publishes documenting the specs for every property of every resource possible in CloudFormation, this app parses the data and helps you write CloudFormation. You can select any resource and add it to a "stack" and it will show you all properties available for that resource along with text fields to fill them in. It highlights required properties and will show you the data types and other helpful information about each property and resource. It also provides hyperlinks directly to the official AWS resource reference for quick lookups if you need more information. 
+## Fluxo operacional
+1. **Verificar acesso disponível**
+   - Se houver computador vinculado, operar em pasta local clonada usando shell do dispositivo para Git.
+   - Se houver navegador disponível, conduzir criação/ajustes do repositório com login/OAuth executados pelo usuário.
+   - Sem os dois recursos, gerar versão em `.zip` para entrega manual.
+2. **Criar/atualizar repositório**
+   - Sempre manter o repositório como **Private**.
+   - Não criar README diretamente no GitHub quando o pacote já contém `README.md`.
+   - Registrar mudanças relevantes no `CHANGELOG.md`.
+3. **Conectar ChatGPT**
+   - Usar somente o conector oficial do GitHub nas configurações do ChatGPT.
+   - Em permissões GitHub, selecionar **Only select repositories** e incluir apenas este repositório.
+   - Evitar links de terceiros para conexão, salvo confirmação explícita do usuário.
+   - Teste de conexão: pedir ao ChatGPT o resumo deste `README.md`.
 
-You can import existing CloudFormation templates and edit them, or create from scratch. Once you a done, you can export the "stack" to a new template that you can copy and paste. Since the JSON data is public, this app requires no backend and can be hosted statically in a S3 bucket.
+## Regras de conteúdo
+- Toda informação deve ser classificada com uma das tags:
+  - `[FATO CONFIRMADO]`
+  - `[PREMISSA]`
+  - `[ESTIMATIVA]`
+  - `[HIPÓTESE]`
+  - `[PONTO A CONFIRMAR]`
+  - `[RISCO CRÍTICO]`
+- Dado regulatório deve registrar: órgão, número, data, vigência, link e implicação.
+- Não inventar números, normas, CAPEX, preços ou aprovações para preencher templates.
+- Materiais vindos do ChatGPT devem passar por revisão crítica e inconsistências devem ser registradas no `CHANGELOG.md`.
 
-## State of the Project
-
-This is currently in a barely working state, and is very fragile. Also since this was a fast and loose single-day project, the whole app is made of a single "home" component. It will currently let you create stacks of resources from scratch and export the template.
-
-## Build Setup
-
-``` bash
-# install dependencies
-npm install
-
-# serve with hot reload at localhost:8080
-npm run dev
-
-# build for production with minification
-npm run build
-
-# build for production and view the bundle analyzer report
-npm run build --report
-
-# run unit tests
-npm run unit
-
-# run all tests
-npm test
-```
-
-For detailed explanation on how things work, checkout the [guide](http://vuejs-templates.github.io/webpack/) and [docs for vue-loader](http://vuejs.github.io/vue-loader).
+## Responsáveis
+- Luigi — Incorporador Líder e Diretor Geral
+- Dan — Diretor de Estruturação Financeira e Intermediação
+- Diego — Diretor de Originação Territorial e Relações Públicas
+- Gabriela — Diretora de Comunicação Estratégica, Documentação e Prompt Engineering
+- João — Diretor de Controladoria, Arrecadação e Compliance Finanças
