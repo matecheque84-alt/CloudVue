@@ -2,9 +2,9 @@
 set -euo pipefail
 
 # ============================================================
-# CloudVue — Single Source of Truth + hardening (idempotente)
+# CloudVue — Single Source of Truth + hardening (idempotente/robusto)
 # Uso:
-#   ./github-hardening.sh --repo OWNER/REPO [--gov-branch BRANCH] [--ir-branch BRANCH] [--apply]
+#   ./github-hardening.sh --repo OWNER/REPO [--gov-branch BRANCH] [--ir-branch BRANCH] [--legacy-source-branch BRANCH] [--apply]
 #
 # Padrão: DRY-RUN (não aplica mudanças). Use --apply para executar.
 # Requer: gh autenticado -> gh auth status
@@ -13,10 +13,20 @@ set -euo pipefail
 REPO=""
 GOV_BRANCH="copilot/auto-close-duplicates"
 IR_BRANCH="copilot/monte-anti-attack-cybernetico"
+LEGACY_SOURCE_BRANCH="master"
 DRY_RUN=true
 
 usage() {
-  echo "Uso: $0 --repo OWNER/REPO [--gov-branch BRANCH] [--ir-branch BRANCH] [--apply]"
+  echo "Uso: $0 --repo OWNER/REPO [--gov-branch BRANCH] [--ir-branch BRANCH] [--legacy-source-branch BRANCH] [--apply]"
+}
+
+quote_cmd() {
+  local out=""
+  local part
+  for part in "$@"; do
+    out+=$(printf "%q " "$part")
+  done
+  echo "${out% }"
 }
 
 while [[ $# -gt 0 ]]; do
@@ -27,6 +37,8 @@ while [[ $# -gt 0 ]]; do
       GOV_BRANCH="${2:-}"; shift 2 ;;
     --ir-branch)
       IR_BRANCH="${2:-}"; shift 2 ;;
+    --legacy-source-branch)
+      LEGACY_SOURCE_BRANCH="${2:-}"; shift 2 ;;
     --apply)
       DRY_RUN=false; shift ;;
     -h|--help)
@@ -44,11 +56,21 @@ if [[ -z "$REPO" ]]; then
   exit 1
 fi
 
+if [[ ! "$REPO" =~ ^[^/]+/[^/]+$ ]]; then
+  echo "Erro: formato inválido para --repo, esperado OWNER/REPO" >&2
+  exit 1
+fi
+
+on_error() {
+  echo "Erro na linha $1: comando falhou." >&2
+}
+trap 'on_error $LINENO' ERR
+
 run() {
   if $DRY_RUN; then
-    echo "[DRY-RUN] $*"
+    echo "[DRY-RUN] $(quote_cmd "$@")"
   else
-    eval "$@"
+    "$@"
   fi
 }
 
@@ -60,6 +82,18 @@ ensure_ref() {
   return 1
 }
 
+ensure_required_ref() {
+  local ref="$1"
+  if ! ensure_ref "$ref"; then
+    echo "Erro: branch obrigatória não encontrada: $ref" >&2
+    exit 1
+  fi
+}
+
+default_branch() {
+  gh repo view "$REPO" --json defaultBranchRef -q '.defaultBranchRef.name'
+}
+
 echo "==> Verificando pré-requisitos..."
 command -v gh >/dev/null || { echo "gh não encontrado" >&2; exit 1; }
 gh auth status >/dev/null
@@ -67,15 +101,24 @@ gh auth status >/dev/null
 echo "==> Verificando acesso ao repo..."
 gh repo view "$REPO" --json name,visibility,defaultBranchRef -q '"repo: \(.name) | visibilidade: \(.visibility) | default: \(.defaultBranchRef.name)"'
 
-echo "==> Tornando o repositório PRIVADO..."
-run "gh repo edit '$REPO' --visibility private --accept-visibility-change-consequences"
+echo "==> Validando branches necessárias..."
+ensure_required_ref "$GOV_BRANCH"
+ensure_required_ref "$IR_BRANCH"
+if ! ensure_ref "$LEGACY_SOURCE_BRANCH"; then
+  echo "   branch '$LEGACY_SOURCE_BRANCH' não existe, usando default branch do repositório"
+  LEGACY_SOURCE_BRANCH="$(default_branch)"
+  ensure_required_ref "$LEGACY_SOURCE_BRANCH"
+fi
 
-echo "==> Criando legacy/2017 a partir de master..."
+echo "==> Tornando o repositório PRIVADO..."
+run gh repo edit "$REPO" --visibility private --accept-visibility-change-consequences
+
+echo "==> Criando legacy/2017 a partir de $LEGACY_SOURCE_BRANCH..."
 if ensure_ref "legacy/2017"; then
   echo "   legacy/2017 já existe"
 else
-  MASTER_SHA=$(gh api "repos/$REPO/git/refs/heads/master" -q '.object.sha')
-  run "gh api -X POST 'repos/$REPO/git/refs' -f ref='refs/heads/legacy/2017' -f sha='$MASTER_SHA'"
+  LEGACY_SHA=$(gh api "repos/$REPO/git/refs/heads/$LEGACY_SOURCE_BRANCH" -q '.object.sha')
+  run gh api -X POST "repos/$REPO/git/refs" -f "ref=refs/heads/legacy/2017" -f "sha=$LEGACY_SHA"
 fi
 
 echo "==> Criando main a partir de $GOV_BRANCH..."
@@ -83,11 +126,11 @@ if ensure_ref "main"; then
   echo "   main já existe"
 else
   GOV_SHA=$(gh api "repos/$REPO/git/refs/heads/$GOV_BRANCH" -q '.object.sha')
-  run "gh api -X POST 'repos/$REPO/git/refs' -f ref='refs/heads/main' -f sha='$GOV_SHA'"
+  run gh api -X POST "repos/$REPO/git/refs" -f "ref=refs/heads/main" -f "sha=$GOV_SHA"
 fi
 
 echo "==> Definindo main como default..."
-run "gh api -X PATCH 'repos/$REPO' -f default_branch='main'"
+run gh api -X PATCH "repos/$REPO" -f "default_branch=main"
 
 echo "==> Aplicando branch protection em main..."
 if $DRY_RUN; then
@@ -112,11 +155,26 @@ JSON
 fi
 
 echo "==> Ativando alertas de vulnerabilidade e Dependabot security updates..."
-run "gh api -X PUT 'repos/$REPO/vulnerability-alerts' || true"
-run "gh api -X PUT 'repos/$REPO/automated-security-fixes' || true"
+if $DRY_RUN; then
+  echo "[DRY-RUN] $(quote_cmd gh api -X PUT "repos/$REPO/vulnerability-alerts")"
+  echo "[DRY-RUN] $(quote_cmd gh api -X PUT "repos/$REPO/automated-security-fixes")"
+else
+  gh api -X PUT "repos/$REPO/vulnerability-alerts" || true
+  gh api -X PUT "repos/$REPO/automated-security-fixes" || true
+fi
 
 echo "==> Abrindo PR (rascunho) de IR para main..."
-run "gh pr create --repo '$REPO' --base main --head '$IR_BRANCH' --title 'Incorporar incident response / hardening (revisão)' --body 'Merge do material de IR na nova fonte de verdade (main). Revisar antes de integrar.' --draft || true"
+if gh pr list --repo "$REPO" --base main --head "$IR_BRANCH" --state open --json number -q 'length > 0' | grep -q true; then
+  echo "   PR já existe para $IR_BRANCH -> main"
+else
+  run gh pr create \
+    --repo "$REPO" \
+    --base main \
+    --head "$IR_BRANCH" \
+    --title "Incorporar incident response / hardening (revisão)" \
+    --body "Merge do material de IR na nova fonte de verdade (main). Revisar antes de integrar." \
+    --draft
+fi
 
 echo
 echo "============================================================"

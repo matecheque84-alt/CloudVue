@@ -77,3 +77,10 @@ Uso:
 Parâmetros opcionais:
 - `--gov-branch` (default: `copilot/auto-close-duplicates`)
 - `--ir-branch` (default: `copilot/monte-anti-attack-cybernetico`)
+- `--legacy-source-branch` (default: `master`; fallback automático para default branch se não existir)
+
+Comportamentos de robustez:
+- Dry-run por padrão (somente aplica com `--apply`)
+- Validação de formato do repositório (`OWNER/REPO`)
+- Validação de existência das branches de governança e IR
+- Criação de PR idempotente (não tenta recriar PR já aberto)
