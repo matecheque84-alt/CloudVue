@@ -65,3 +65,15 @@ Entidade atribuída deve incluir, quando possível: usuário/token, runner, IP, 
 - Detecção: SIEM com alertas de comportamento anômalo em IAM/CI/cluster.
 
 Checklist operacional: `/home/runner/work/CloudVue/CloudVue/security/incident-response/eradication-recovery-hardening.checklist.md`
+
+## Automação de governança GitHub
+
+Script: `/home/runner/work/CloudVue/CloudVue/security/incident-response/github-hardening.sh`
+
+Uso:
+- Dry-run (padrão): `./security/incident-response/github-hardening.sh --repo OWNER/REPO`
+- Aplicar mudanças: `./security/incident-response/github-hardening.sh --repo OWNER/REPO --apply`
+
+Parâmetros opcionais:
+- `--gov-branch` (default: `copilot/auto-close-duplicates`)
+- `--ir-branch` (default: `copilot/monte-anti-attack-cybernetico`)
