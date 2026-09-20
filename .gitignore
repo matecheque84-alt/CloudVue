@@ -12,3 +12,23 @@ test/unit/coverage
 *.ntvs*
 *.njsproj
 *.sln
+
+# SPE Castro Alves/Sapeaçu - segurança documental
+*.pem
+*.key
+*.p12
+*.pfx
+*.crt
+*.cer
+*.jks
+*.keystore
+*.env
+.env.*
+*.token
+*_token*
+*secret*
+*credential*
+*.pdf
+*.PDF
+*_assinado.*
+*_assinado_digitalmente.*
