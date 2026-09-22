@@ -1,0 +1,154 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "NORTE Change Record",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "change_id",
+    "mission_id",
+    "actor",
+    "repository",
+    "branch",
+    "head_sha",
+    "authorization",
+    "risk",
+    "checks",
+    "reviews",
+    "decision"
+  ],
+  "properties": {
+    "change_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "mission_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "actor": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "type"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "type": {
+          "enum": [
+            "human",
+            "agent",
+            "service"
+          ]
+        }
+      }
+    },
+    "repository": {
+      "type": "string",
+      "minLength": 1
+    },
+    "branch": {
+      "type": "string",
+      "minLength": 1
+    },
+    "base_sha": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "head_sha": {
+      "type": "string",
+      "pattern": "^[0-9a-fA-F]{40}$"
+    },
+    "authorization": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "result",
+        "policy_version"
+      ],
+      "properties": {
+        "result": {
+          "enum": [
+            "ALLOW",
+            "DENY",
+            "CONCEALED_DENY",
+            "QUERY_FAILED"
+          ]
+        },
+        "policy_version": {
+          "type": "string",
+          "minLength": 1
+        },
+        "resource": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "action": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "manifest_sha256": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "source_refs": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "risk": {
+      "enum": [
+        "LOW",
+        "MEDIUM",
+        "HIGH",
+        "CRITICAL"
+      ]
+    },
+    "checks": {
+      "type": "object"
+    },
+    "reviews": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "decision": {
+      "enum": [
+        "PROMOTE",
+        "HOLD",
+        "REJECT",
+        "SUPERSEDE"
+      ]
+    },
+    "red_team_required": {
+      "type": "boolean"
+    },
+    "merged_sha": {
+      "type": [
+        "string",
+        "null"
+      ]
+    }
+  }
+}
