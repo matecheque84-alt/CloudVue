@@ -1,0 +1,52 @@
+name: Red Team Governance
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, edited, ready_for_review]
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  red-team:
+    name: red-team-governance
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Independently inspect high-risk governance invariants
+        env:
+          EVENT_JSON: ${{ toJSON(github.event) }}
+          GH_TOKEN: ${{ github.token }}
+          REPOSITORY: ${{ github.repository }}
+        run: |
+          python - <<'PY'
+          import json, os, re, urllib.request
+          e=json.loads(os.environ["EVENT_JSON"])
+          pr=e["pull_request"]
+          body=pr.get("body") or ""
+          sha=pr["head"]["sha"]
+          number=pr["number"]
+          errors=[]
+          risk=re.search(r"Risk:\s*(LOW|MEDIUM|HIGH|CRITICAL)",body,re.I)
+          if not risk:
+              errors.append("Red Team cannot establish risk classification")
+          m=re.search(r"Head SHA:\s*([0-9a-fA-F]{40})",body)
+          if not m or m.group(1).lower()!=sha.lower():
+              errors.append("Red Team exact-SHA invariant failed")
+          req=urllib.request.Request(
+              f"https://api.github.com/repos/{os.environ['REPOSITORY']}/pulls/{number}/files?per_page=100",
+              headers={"Authorization":f"Bearer {os.environ['GH_TOKEN']}","Accept":"application/vnd.github+json"})
+          with urllib.request.urlopen(req) as resp: files=json.load(resp)
+          names={f.get("filename","") for f in files}
+          sensitive=any(n.startswith(".github/workflows/") or n.startswith("governance/") or n=="SECURITY.md" for n in names)
+          if risk and risk.group(1).upper() in {"HIGH","CRITICAL"}:
+              red=re.search(r"Red Team required:\s*(yes|no)",body,re.I)
+              if not red or red.group(1).lower()!="yes":
+                  errors.append("HIGH/CRITICAL record does not require Red Team")
+          print(f"Red Team observed {len(names)} changed files; sensitive={sensitive}; head={sha}")
+          if errors:
+              for x in errors: print("::error::"+x)
+              raise SystemExit(1)
+          print("Automated Red Team structural checks passed. Human approval remains a separate merge requirement.")
+          PY

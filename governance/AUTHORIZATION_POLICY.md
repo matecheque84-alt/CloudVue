@@ -29,7 +29,18 @@ Batch/list operations MAY preserve RBAC filtering and skip unreadable resources.
 
 ## Separation of duties
 
-AUTHOR != REVIEWER != DECIDER. HIGH/CRITICAL changes require independent Red Team review before PROMOTE.
+AUTHOR != REVIEWER != DECIDER. HIGH/CRITICAL changes require Red Team review before PROMOTE.
+
+Automated Red Team analysis is an independent control signal, not a substitute for the repository's required human approval. A producer or PR author MUST NOT satisfy its own independent-review requirement.
+
+## Trusted review state
+
+For promotion, NORTE MUST verify review state from the GitHub review API rather than trusting an author-editable PR-body field. The effective approval MUST:
+- be APPROVED;
+- come from an identity different from the PR author; and
+- bind to the exact current PR head SHA.
+
+A new commit invalidates the previous exact-SHA approval for NORTE purposes.
 
 ## Merge authorization
 
