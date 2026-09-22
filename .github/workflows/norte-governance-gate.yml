@@ -1,0 +1,48 @@
+name: NORTE Governance Gate
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, edited, ready_for_review]
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  governance:
+    name: norte-governance
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Validate auditable PR metadata
+        env:
+          EVENT_PATH: ${{ github.event_path }}
+        run: |
+          python - <<'PY'
+          import json, os, re
+          with open(os.environ['EVENT_PATH'], encoding='utf-8') as f:
+              e=json.load(f)
+          pr=e['pull_request']; body=pr.get('body') or ''; sha=pr['head']['sha']
+          required=['Change ID:','Mission ID:','Operational author','Risk:','Evidence refs:','Authorization result:','Policy version:','Independent reviewer:','Red Team required:','Decision:']
+          errors=[]
+          missing=[x for x in required if x not in body]
+          if missing: errors.append('missing audit fields: '+', '.join(missing))
+          m=re.search(r'Head SHA:\s*([0-9a-fA-F]{40})',body)
+          if not m: errors.append('Head SHA must contain a full 40-character commit SHA')
+          elif m.group(1).lower()!=sha.lower(): errors.append('recorded Head SHA does not equal PR head SHA')
+          risk=re.search(r'Risk:\s*(LOW|MEDIUM|HIGH|CRITICAL)',body,re.I)
+          red=re.search(r'Red Team required:\s*(yes|no)',body,re.I)
+          decision=re.search(r'Decision:\s*(PROMOTE|HOLD|REJECT|SUPERSEDE)',body,re.I)
+          auth=re.search(r'Authorization result:\s*(ALLOW|DENY|CONCEALED_DENY|QUERY_FAILED)',body,re.I)
+          if not risk: errors.append('Risk must be explicit')
+          if not red: errors.append('Red Team requirement must be explicit')
+          if not decision: errors.append('Decision must be explicit')
+          if not auth: errors.append('Authorization result must be explicit')
+          if risk and risk.group(1).upper() in {'HIGH','CRITICAL'} and (not red or red.group(1).lower()!='yes'): errors.append('HIGH/CRITICAL requires Red Team review')
+          if decision and decision.group(1).upper()!='PROMOTE': errors.append('merge gate requires Decision: PROMOTE')
+          if auth and auth.group(1).upper()!='ALLOW': errors.append('merge gate requires Authorization result: ALLOW')
+          if errors:
+              for x in errors: print('::error::'+x)
+              raise SystemExit(1)
+          print('NORTE governance metadata and exact SHA binding validated.')
+          PY
